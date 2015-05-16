@@ -1,6 +1,6 @@
-#![allow(unstable)]
+extern crate rand;
 
-use std::{rand, io, os};
+use std::io::{BufRead, Write};
 use std::cmp::Ordering;
 
 fn compare(a:u32, b:u32) -> Ordering {
@@ -9,27 +9,34 @@ fn compare(a:u32, b:u32) -> Ordering {
     else { Ordering::Equal }
 }
 
+fn print_and_flush(txt:&str) {
+    print!("{}", txt);
+    std::io::stdout().flush().unwrap();
+}
+
 fn main() {
+    let args:Vec<_> = std::env::args().collect();
     let random_value = (rand::random::<u32>() % 100) + 1;
 
-    let is_cheating = os::args().len() > 1 && os::args()[1] == "-cheat";
+    let is_cheating = args.len() > 1 && args[1] == "-cheat";
     if is_cheating {
         println!("The random value is {}, cheater.", random_value);
     }
 
+    print_and_flush("Enter your guess: ");
+
+    let stdin = std::io::stdin();
     let mut guesses = 0;
-    loop {
+    for line in stdin.lock().lines() {
         guesses += 1;
 
-        println!("Enter your guess:");
-        let input = io::stdin().read_line()
-                               .ok()
-                               .expect("Unable to read what you've written.")
-                               .trim()
-                               .parse::<u32>();
+        let input = line.ok()
+                        .expect("Unable to read what you've written.")
+                        .trim()
+                        .parse::<u32>();
         let num = match input {
-            Some(n) => n,
-            None    => {
+            Ok(n)  => n,
+            Err(_) => {
                 println!("Yeah, that wasn't a number. Clearly, you don't want to play.");
                 return;
             }
@@ -43,5 +50,7 @@ fn main() {
                 return;
             },
         };
+
+        print_and_flush("Try again: ");
     }
 }
